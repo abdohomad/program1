@@ -11,70 +11,141 @@ class GraphManager:
         self.heuristics = {}
 
     def add_city(self, city, coordinates):
-        """Add a city with its coordinates to the graph."""
         self.graph.add_node(city, coordinates=coordinates)
 
     def add_connection(self, source, destination, distance, one_way=False):
-        """Add a connection between two cities with an optional one-way flag."""
         self.graph.add_edge(source, destination, weight=distance)
         if not one_way:
             self.graph.add_edge(destination, source, weight=distance)
 
     def breadth_first_search(self, start, goal):
-        """Perform breadth-first search to find a path from start to goal."""
-        queue = [(start, [start])]
-        while queue:
-            current, path = queue.pop(0)
-            for next_city in set(self.graph.neighbors(current)) - set(path):
-                if next_city == goal:
-                    return path + [next_city]
-                else:
-                    queue.append((next_city, path + [next_city]))
+
+        # Open list (queue) to store nodes to be explored next
+        # Initialize with starting node and empty path
+        open_list = [(start, [])]
+
+        # Closed list to store explored nodes
+        closed_list = set()
+
+        while open_list:
+            # Pop the current node and its path from the front of the open list (queue)
+            current, path = open_list.pop(0)
+
+            # Add the current node to the closed list
+            closed_list.add(current)
+
+            # Check if the goal node is reached
+            if current == goal:
+                # Path found, return the complete path from start to goal
+                return path + [current]
+
+            # Explore unvisited neighbors
+            for next_city in set(self.graph.neighbors(current)) - closed_list:
+                # Add the neighbor and updated path to the end of the open list
+                open_list.append((next_city, path + [current]))
+
+        # No path found, return None
         return None
 
     def depth_first_search(self, start, goal):
-        """Perform depth-first search to find a path from start to goal."""
-        stack = [(start, [start])]
-        while stack:
-            current, path = stack.pop()
-            for next_city in set(self.graph.neighbors(current)) - set(path):
-                if next_city == goal:
-                    return path + [next_city]
-                else:
-                    stack.append((next_city, path + [next_city]))
+
+        # Open list (stack) to store nodes to be explored next.
+        # Initialize with starting node and empty path.
+        open_list = [(start, [])]
+
+        # Closed list to store explored nodes.
+        closed_list = set()
+
+        while open_list:
+            # Pop the current node and its path from the open list (stack).
+            current, path = open_list.pop()
+
+            # Add the current node to the closed list.
+            closed_list.add(current)
+
+            # Check if the goal node is reached.
+            if current == goal:
+                # Path found, return the complete path from start to goal.
+                return path + [current]
+
+            # Explore unvisited neighbors
+            for next_city in set(self.graph.neighbors(current)) - closed_list:
+                # Add the neighbor and updated path to the open list.
+                open_list.append((next_city, path + [current]))
+
+        # No path found, return None
         return None
 
-    def best_first_search(self, start, goal):
-        """Perform best-first search to find a path from start to goal."""
-        queue = [(0, start, [start])]
-        while queue:
-            cost, current, path = heapq.heappop(queue)
-            for next_city in set(self.graph.neighbors(current)) - set(path):
-                if next_city == goal:
-                    return path + [next_city]
-                else:
-                    next_cost = self.graph[current][next_city]["weight"]
-                    heapq.heappush(
-                        queue, (next_cost, next_city, path + [next_city]))
-        return None
+    def best_first_search(self, start, goal, heuristic_fn):
+
+        open_list = []  # Priority queue for open nodes
+        closed_list = set()  # Set to store explored nodes
+
+        # Initial node with estimated cost and path
+        heapq.heappush(open_list, (0, start, [start]))
+
+        while open_list:
+            # Get node with lowest estimated cost
+            current_cost, current_node, path = heapq.heappop(open_list)
+            closed_list.add(current_node)
+
+            # Goal reached, return path
+            if current_node == goal:
+                return path + [goal]
+
+            # Explore neighbors
+            for next_city in set(self.graph.neighbors(current_node)) - closed_list:
+                # Calculate estimated total cost to goal for neighbor
+                tentative_cost = current_cost + \
+                    self.graph[current_node][next_city]["weight"] + \
+                    heuristic_fn(next_city, goal)
+
+            # Check for existing node in open list with higher cost
+            for i, (existing_cost, _, _) in enumerate(open_list):
+                if next_city == _ and tentative_cost < existing_cost:
+                    del open_list[i]  # Remove existing node
+                break
+
+            # Add neighbor to open list with updated cost and path
+            heapq.heappush(open_list, (tentative_cost,
+                           next_city, path + [next_city]))
+
+        return None  # No path found
 
     def a_star_search(self, start_city, goal_city):
-        """Perform A* search to find a path from start to goal."""
-        queue = [(0, start_city, [start_city])]
-        while queue:
-            cost, current, path = heapq.heappop(queue)
-            for next_city in set(self.graph.neighbors(current)) - set(path):
-                if next_city == goal_city:
-                    return path + [next_city]
-                else:
-                    next_cost = self.graph[current][next_city]["weight"]
-                    heuristic = self.heuristics[(current, next_city)]
-                    total_cost = cost + next_cost + heuristic
-                    heapq.heappush(
-                        queue, (total_cost, next_city, path + [next_city]))
+
+        open_list = []  # Initialize open list
+        closed_list = set()  # Initialize closed list
+
+        start_node = (0, start_city, [start_city])  # (f_score, city, path)
+        heapq.heappush(open_list, start_node)  # Add start node to open list
+
+        while open_list:
+            current_cost, current_city, current_path = heapq.heappop(open_list)
+            closed_list.add(current_city)  # Add current node to closed list
+
+            if current_city == goal_city:
+                return current_path  # Found the goal, return the path
+
+            for next_city in set(self.graph.neighbors(current_city)) - closed_list:
+                next_cost = self.graph[current_city][next_city]["weight"]
+                heuristic = self.heuristics[(current_city, next_city)]
+                total_cost = current_cost + next_cost + heuristic
+                next_node = (total_cost, next_city, current_path + [next_city])
+
+                # Check for duplicates and update if necessary
+                if next_city not in closed_list:
+                    heapq.heappush(open_list, next_node)
+
+                # If next_city is in open_list with a higher g_score, update it
+                for i, (f_score, _, _) in enumerate(open_list):
+                    if next_city == _ and total_cost < f_score:
+                        open_list[i] = next_node
+                        break
+
+        return None  # No path found
 
     def heuristic_cost_estimate(self, current_coords, goal_coords):
-        """Estimate the cost (heuristic) between two city coordinates."""
         try:
             distance = geodesic(current_coords, goal_coords).miles
             return distance
@@ -83,7 +154,6 @@ class GraphManager:
             return 0
 
     def compute_heuristics(self):
-        """Calculate and store heuristic values for all city pairs in self.heuristics."""
         for city1 in self.graph.nodes:
             for city2 in self.graph.nodes:
                 if city1 != city2:
@@ -92,19 +162,7 @@ class GraphManager:
                         self.graph.nodes[city2]["coordinates"]
                     )
                     self.heuristics[(city1, city2)] = distance
-
-    def benchmark_a_star_search(self, start_city, goal_city, number_of_iterations=1000):
-
-        # Pre-compute heuristics to avoid calculating them within the benchmark
-        self.compute_heuristics()
-
-        time_taken = timeit.timeit(
-            lambda: self.a_star_search(start_city, goal_city), number=number_of_iterations
-        )
-        average_time = time_taken / number_of_iterations
-        print(
-            f"Average time for A* search ({start_city} to {goal_city}): {average_time:.4f} seconds")
+                    self.heuristics[(city2, city1)] = distance
 
     def get_graph(self):
-        """Return the underlying graph."""
         return self.graph
