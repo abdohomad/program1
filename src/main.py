@@ -67,7 +67,7 @@ def main():
     add_cities(graph_manager, city_coordinates)
     # Add cities to the graph and establish connections
     add_connections(graph_manager, city_coordinates, adjacency_file)
-
+    graph_manager.benchmark_a_star_search("El_Dorado", "Topeka", 1000)
     # Define search algorithms
     search_algorithms = {
         "1": "Breadth-First Search",

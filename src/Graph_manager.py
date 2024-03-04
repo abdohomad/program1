@@ -2,6 +2,7 @@ import networkx as nx
 from geopy.distance import geodesic
 import heapq
 from geopy.exc import GeopyError
+import timeit
 
 
 class GraphManager:
@@ -91,6 +92,18 @@ class GraphManager:
                         self.graph.nodes[city2]["coordinates"]
                     )
                     self.heuristics[(city1, city2)] = distance
+
+    def benchmark_a_star_search(self, start_city, goal_city, number_of_iterations=1000):
+
+        # Pre-compute heuristics to avoid calculating them within the benchmark
+        self.compute_heuristics()
+
+        time_taken = timeit.timeit(
+            lambda: self.a_star_search(start_city, goal_city), number=number_of_iterations
+        )
+        average_time = time_taken / number_of_iterations
+        print(
+            f"Average time for A* search ({start_city} to {goal_city}): {average_time:.4f} seconds")
 
     def get_graph(self):
         """Return the underlying graph."""
