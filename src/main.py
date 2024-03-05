@@ -154,7 +154,6 @@ def visualize_route_on_map(graph_manager, route):
     plt.figure(figsize=(8, 6))
     scatter_plot = plt.scatter(lons, lats, color='red', label='Cities')
 
-    # Optionally, mark the starting and goal cities differently
     plt.scatter(lons[0], lats[0], color='green',
                 marker='s', s=100, label='Start City')
     plt.scatter(lons[-1], lats[-1], color='orange',
