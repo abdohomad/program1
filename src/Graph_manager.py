@@ -9,7 +9,6 @@ class GraphManager:
     def __init__(self):
         self.graph = nx.DiGraph()
         self.heuristics = {}
-        self.steps = []
 
     def add_city(self, city, coordinates):
         self.graph.add_node(city, coordinates=coordinates)
