@@ -2,13 +2,14 @@ import networkx as nx
 from geopy.distance import geodesic
 import heapq
 from geopy.exc import GeopyError
-import timeit
+import matplotlib.pyplot as plt
 
 
 class GraphManager:
     def __init__(self):
         self.graph = nx.DiGraph()
         self.heuristics = {}
+        self.steps = []
 
     def add_city(self, city, coordinates):
         self.graph.add_node(city, coordinates=coordinates)
@@ -76,7 +77,7 @@ class GraphManager:
         # No path found, return None
         return None
 
-    def best_first_search(self, start, goal, heuristic_fn):
+    def best_first_search(self, start, goal):
 
         open_list = []  # Priority queue for open nodes
         closed_list = set()  # Set to store explored nodes
@@ -95,19 +96,23 @@ class GraphManager:
 
             # Explore neighbors
             for next_city in set(self.graph.neighbors(current_node)) - closed_list:
-                # Calculate estimated total cost to goal for neighbor
-                tentative_cost = current_cost + \
-                    self.graph[current_node][next_city]["weight"] + \
-                    heuristic_fn(next_city, goal)
+                next_cost = self.graph[current_node][next_city]["weight"]
+                heuristic = self.heuristic_cost_estimate(
+                    self.graph.nodes[next_city]["coordinates"],
+                    self.graph.nodes[goal]["coordinates"])
+                total_cost = current_cost + next_cost + heuristic
+                next_node = (total_cost,
+                             next_city,
+                             path + [next_city])
 
             # Check for existing node in open list with higher cost
             for i, (existing_cost, _, _) in enumerate(open_list):
-                if next_city == _ and tentative_cost < existing_cost:
+                if next_city == _ and next_cost < existing_cost:
                     del open_list[i]  # Remove existing node
                 break
 
             # Add neighbor to open list with updated cost and path
-            heapq.heappush(open_list, (tentative_cost,
+            heapq.heappush(open_list, (next_cost,
                            next_city, path + [next_city]))
 
         return None  # No path found
@@ -129,10 +134,11 @@ class GraphManager:
 
             for next_city in set(self.graph.neighbors(current_city)) - closed_list:
                 next_cost = self.graph[current_city][next_city]["weight"]
-                heuristic = self.heuristics[(current_city, next_city)]
+                heuristic = self.heuristic_cost_estimate(
+                    self.graph.nodes[next_city]["coordinates"],
+                    self.graph.nodes[goal_city]["coordinates"])
                 total_cost = current_cost + next_cost + heuristic
                 next_node = (total_cost, next_city, current_path + [next_city])
-
                 # Check for duplicates and update if necessary
                 if next_city not in closed_list:
                     heapq.heappush(open_list, next_node)
@@ -142,7 +148,6 @@ class GraphManager:
                     if next_city == _ and total_cost < f_score:
                         open_list[i] = next_node
                         break
-
         return None  # No path found
 
     def heuristic_cost_estimate(self, current_coords, goal_coords):
@@ -162,7 +167,6 @@ class GraphManager:
                         self.graph.nodes[city2]["coordinates"]
                     )
                     self.heuristics[(city1, city2)] = distance
-                    self.heuristics[(city2, city1)] = distance
 
     def get_graph(self):
         return self.graph
