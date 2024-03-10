@@ -1,3 +1,4 @@
+import pandas as pd
 from Graph_manager import GraphManager
 from Coordinates import Coordinates
 from geopy.distance import geodesic
@@ -78,122 +79,78 @@ def main():
     # Add cities to the graph and establish connections
     add_connections(graph_manager, city_coordinates, adjacency_file)
 
-    # Define search algorithms
+    start_city = input("Enter the starting city: ")
+    goal_city = input("Enter the destination city: ")
 
+    start_coords, goal_coords = city_coordinates.get(
+        start_city), city_coordinates.get(goal_city)
+
+    if not start_coords or not goal_coords:
+        print(f"Coordinates not found for {start_city} or {goal_city}")
+        return
+
+    graph_manager.compute_heuristics()
+
+    # Define search algorithms
     search_algorithms = {
         "1": "Breadth-First Search",
         "2": "Depth-First Search",
-        "3": "Best-First Search (A* with heuristic based on straight-line distance)",
-        "4": "A* Search (custom heuristic can be implemented)",
-        "5": "Exit"
+        "3": "Best-First Search",
+        "4": "A* Search"
     }
 
-    while True:
-        # Get user choice for search algorithm
-        choice = get_user_choice(search_algorithms)
+    function1_choice = input("Enter the first function choice (1-4): ")
+    function2_choice = input("Enter the second function choice (1-4): ")
 
-        if choice == "5":
-            print("Exiting the program. Goodbye!")
-            break
+    if function1_choice not in search_algorithms or function2_choice not in search_algorithms:
+        print("Invalid function choices. Please enter numbers between 1 and 4.")
+        return
 
-        start_city = input("Enter the starting city: ")
-        goal_city = input("Enter the destination city: ")
+    function1_algorithm = search_algorithms[function1_choice]
+    function2_algorithm = search_algorithms[function2_choice]
 
-        start_coords, goal_coords = city_coordinates.get(
-            start_city), city_coordinates.get(goal_city)
+    start_time = time.time()  # Start time measurement
 
-        # Check if the coordinates are found before calling the search
-        if start_coords and goal_coords:
-            start_time = time.time()  # Start time measurement
+    solution_path1, visited1 = execute_search_function(
+        graph_manager, function1_choice, start_city, goal_city)
 
-            if choice == "1":
-                solution_path = graph_manager.breadth_first_search(
-                    start_city, goal_city)
-            elif choice == "2":
-                solution_path = graph_manager.depth_first_search(
-                    start_city, goal_city)
-            elif choice == "3":
-                solution_path = graph_manager.best_first_search(
-                    start_city, goal_city)
-            elif choice == "4":
-                solution_path = graph_manager.a_star_search(
-                    start_city, goal_city)  # Implement custom heuristic here
-            else:
-                print("Invalid search algorithm choice.")
+    elapsed_time1 = time.time() - start_time
 
-            # Stop time measurement and calculate elapsed time
-            elapsed_time = time.time() - start_time
+    start_time = time.time()  # Reset start time for the second function
 
-            if solution_path:
-                print(f"Solution path: {solution_path}")
+    solution_path2, visited2 = execute_search_function(
+        graph_manager, function2_choice, start_city, goal_city)
 
-                # Calculate total distance
-                total_distance = calculate_distance(
-                    solution_path, city_coordinates)
-                print(f"Total distance: {total_distance:.2f} miles")
+    elapsed_time2 = time.time() - start_time
 
-                print(f"Search time: {elapsed_time:.4f} seconds")
+    # Display results as a table
+    results_table = pd.DataFrame({
+        "Algorithm": [function1_algorithm, function2_algorithm],
+        "Visited Cities": [len(visited1) if visited1 else None, len(visited2) if visited2 else None],
+        "Total Distance": [calculate_distance(solution_path1, city_coordinates) if solution_path1 else None,
+                           calculate_distance(solution_path2, city_coordinates) if solution_path2 else None],
+        "Search Time": ["{:.9f}".format(elapsed_time1), "{:.9f}".format(elapsed_time2)]
+    })
 
-                visualize_route_on_map(graph_manager, solution_path)
-            else:
-                print("Route not found between these cities.")
-        else:
-            print(f"Coordinates not found for {start_city} or {goal_city}")
+    print("\nSearch Results:")
+    print(results_table)
+    print('////////////////')
+    print(visited1)
+    print("/////")
+    print(visited2)
 
 
-def visualize_route_on_map(graph_manager, route):
-    # Extract coordinates and city names for cities in the route
-    route_coords = [graph_manager.graph.nodes[city]['coordinates']
-                    for city in route]
-    city_names = route
-
-    # Extract latitude and longitude for plotting
-    lats, lons = zip(*route_coords)
-
-    # Plot the scatter plot for all cities first
-    plt.figure(figsize=(8, 6))
-    scatter_plot = plt.scatter(lons, lats, color='red', label='Cities')
-
-    # Optionally, mark the starting and goal cities differently
-    plt.scatter(lons[0], lats[0], color='green',
-                marker='s', s=100, label='Start City')
-    plt.scatter(lons[-1], lats[-1], color='orange',
-                marker='^', s=100, label='Goal City')
-
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.title('Route Visualization')
-    plt.legend()
-
-    # Plot the route on top of the scatter plot using a line
-    line_plot, = plt.plot(lons, lats, color='blue',
-                          label='Route', linestyle='-', linewidth=2)
-
-    # Add city names as annotations
-    for name, lat, lon in zip(city_names, lats, lons):
-        plt.text(lon, lat, name, fontsize=8,
-                 ha='right', va='bottom', alpha=0.5)
-
-    plt.ion()  # Enable interactive mode
-    plt.show()
-
-    # Animate the route progression
-
-    for i in range(1, len(route)):
-        current_city = route[i]
-
-        # Highlight the current city by changing its color
-        scatter_plot.set_array(
-            [0 if city == current_city else 1 for city in route])
-
-        # Update the line plot to show the progression
-        line_plot.set_data(lons[:i + 1], lats[:i + 1])
-
-        plt.title(f'Current City: {current_city}')
-        plt.pause(0.5)
-
-    plt.ioff()  # Disable interactive mode to keep the plot open
-    plt.show()
+def execute_search_function(graph_manager, choice, start_city, goal_city):
+    if choice == "1":
+        return graph_manager.breadth_first_search(start_city, goal_city)
+    elif choice == "2":
+        return graph_manager.depth_first_search(start_city, goal_city)
+    elif choice == "3":
+        return graph_manager.best_first_search(start_city, goal_city)
+    elif choice == "4":
+        return graph_manager.a_star_search(start_city, goal_city)
+    else:
+        return None, None
 
 
 if __name__ == "__main__":
