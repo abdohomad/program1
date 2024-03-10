@@ -140,7 +140,6 @@ def main():
     print(visited2)
 
 
-<<<<<<< HEAD
 def execute_search_function(graph_manager, choice, start_city, goal_city):
     if choice == "1":
         return graph_manager.breadth_first_search(start_city, goal_city)
@@ -152,60 +151,6 @@ def execute_search_function(graph_manager, choice, start_city, goal_city):
         return graph_manager.a_star_search(start_city, goal_city)
     else:
         return None, None
-=======
-def visualize_route_on_map(graph_manager, route):
-    # Extract coordinates and city names for cities in the route
-    route_coords = [graph_manager.graph.nodes[city]['coordinates']
-                    for city in route]
-    city_names = route
-
-    # Extract latitude and longitude for plotting
-    lats, lons = zip(*route_coords)
-
-    # Plot the scatter plot for all cities first
-    plt.figure(figsize=(8, 6))
-    scatter_plot = plt.scatter(lons, lats, color='red', label='Cities')
-
-    plt.scatter(lons[0], lats[0], color='green',
-                marker='s', s=100, label='Start City')
-    plt.scatter(lons[-1], lats[-1], color='orange',
-                marker='^', s=100, label='Goal City')
-
-    plt.xlabel('Longitude')
-    plt.ylabel('Latitude')
-    plt.title('Route Visualization')
-    plt.legend()
-
-    # Plot the route on top of the scatter plot using a line
-    line_plot, = plt.plot(lons, lats, color='blue',
-                          label='Route', linestyle='-', linewidth=2)
-
-    # Add city names as annotations
-    for name, lat, lon in zip(city_names, lats, lons):
-        plt.text(lon, lat, name, fontsize=8,
-                 ha='right', va='bottom', alpha=0.5)
-
-    plt.ion()  # Enable interactive mode
-    plt.show()
-
-    # Animate the route progression
-
-    for i in range(1, len(route)):
-        current_city = route[i]
-
-        # Highlight the current city by changing its color
-        scatter_plot.set_array(
-            [0 if city == current_city else 1 for city in route])
-
-        # Update the line plot to show the progression
-        line_plot.set_data(lons[:i + 1], lats[:i + 1])
-
-        plt.title(f'Current City: {current_city}')
-        plt.pause(0.5)
-
-    plt.ioff()  # Disable interactive mode to keep the plot open
-    plt.show()
->>>>>>> 07b1a37604439e12d4fde95198993ec63b38df6a
 
 
 if __name__ == "__main__":
