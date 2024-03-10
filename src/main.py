@@ -44,11 +44,11 @@ def get_user_choice(search_algorithms):
         print(f"{code}. {algorithm}")
 
     while True:
-        choice = input("Enter your choice (1-4): ")
+        choice = input("Enter your choice (1-5): ")
         if choice in search_algorithms:
             return choice
         else:
-            print("Invalid choice. Please enter a number between 1 and 4.")
+            print("Invalid choice. Please enter a number between 1 and 5.")
 
 
 def calculate_distance(path, city_coordinates):
@@ -70,8 +70,10 @@ def execute_search_function(graph_manager, choice, start_city, goal_city):
     elif choice == "2":
         return graph_manager.depth_first_search(start_city, goal_city)
     elif choice == "3":
-        return graph_manager.best_first_search(start_city, goal_city)
+        return graph_manager.i_d_dfs_search(start_city, goal_city)
     elif choice == "4":
+        return graph_manager.best_first_search(start_city, goal_city)
+    elif choice == "5":
         return graph_manager.a_star_search(start_city, goal_city)
     else:
         return None, None
@@ -91,7 +93,7 @@ def validate_city_choice(choice, available_cities):
 
 
 def validate_algorithm_choice(choice):
-    return choice in {"1", "2", "3", "4"}
+    return choice in {"1", "2", "3", "4", "5"}
 
 
 def display_results(results_table, solution_path1, solution_path2):
@@ -141,17 +143,18 @@ def main():
         search_algorithms = {
             "1": "Breadth-First Search",
             "2": "Depth-First Search",
-            "3": "Best-First Search",
-            "4": "A* Search"
+            "3": "i_d_dfs_search",
+            "4": "Best-First Search",
+            "5": "A* Search"
         }
 
         function1_choice = get_user_input(
-            "Enter the first function choice (1-4): ", lambda choice: validate_algorithm_choice(choice))
+            "Enter the first function choice (1-5): ", lambda choice: validate_algorithm_choice(choice))
         function2_choice = get_user_input(
-            "Enter the second function choice (1-4): ", lambda choice: validate_algorithm_choice(choice))
+            "Enter the second function choice (1-5): ", lambda choice: validate_algorithm_choice(choice))
 
         if function1_choice not in search_algorithms or function2_choice not in search_algorithms:
-            print("Invalid function choices. Please enter numbers between 1 and 4.")
+            print("Invalid function choices. Please enter numbers between 1 and 5.")
             return
 
         function1_algorithm = search_algorithms[function1_choice]
@@ -187,10 +190,6 @@ def main():
             "\nDo you want to perform another comparison? (yes/no): ").lower()
         if another_comparison != 'yes':
             break
-
-
-if __name__ == "__main__":
-    main()
 
 
 if __name__ == "__main__":

@@ -54,6 +54,35 @@ class GraphManager:
 
         return self.generic_blind_search(start, goal, search_type="dfs")
 
+    def i_d_dfs_search(self, start, goal):
+
+        depth_limit = 0
+        explored_set = set()
+        while True:
+            result, explored = self.depth_limited_search(
+                start, goal, depth_limit, explored_set)
+            if result is not None:
+                return result, explored
+            depth_limit += 1
+            explored_set = set()  # Reset explored set for each depth iteration
+
+    def depth_limited_search(self, start, goal, depth_limit, explored_set):
+
+        if start == goal:
+            return [start], explored_set
+
+        if depth_limit == 0:
+            return None, explored_set
+
+        path = [start]
+        explored_set.add(start)
+        for neighbor in set(self.graph.neighbors(start)) - explored_set:
+            result, explored = self.depth_limited_search(
+                neighbor, goal, depth_limit - 1, explored_set.copy())
+            if result is not None:
+                return path + result, explored
+        return None, explored_set
+
     def best_first_search(self, start, goal):
 
         open_list = []  # Priority queue for open nodes
