@@ -22,12 +22,7 @@ class GraphManager:
             self.graph.add_edge(destination, source, weight=distance)
 
     def calculate_memory_usage(self):
-        process = psutil.Process()
-        memory_info = process.memory_info()
-        memory_used_in_bytes = memory_info.rss  # Get the memory used in bytes
-        memory_used_in_kb = memory_used_in_bytes / 1024  # Convert to kilobytes
-        memory_used_in_mb = memory_used_in_kb / 1024  # Convert to megabytes
-        return memory_used_in_mb
+        return psutil.Process().memory_info().rss / (1024**2)  # In MB
 
     def generic_blind_search(self, start, goal, search_type="bfs"):
         """
