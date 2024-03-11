@@ -107,6 +107,9 @@ class GraphManager:
         explored_list = set()  # Set to store explored nodes
 
         # Initial node with estimated cost and path
+        if start is None or goal is None:
+            raise ValueError("Start and goal nodes cannot be None")
+
         if start != goal:
             open_list[start] = (self.heuristics[start, goal], [start])
         elif start == goal:
@@ -114,8 +117,14 @@ class GraphManager:
 
         while open_list:
             # Get node with lowest estimated cost
-            current_cost, current_path = open_list[min(
-                open_list, key=open_list.get)]
+            try:
+                time.sleep(0.001)
+                current_cost, current_path = open_list[min(
+                    open_list, key=open_list.get)]
+            except KeyError:
+                raise KeyError(
+                    "Encountered a key that doesn't exist in open_list")
+
             current_city = current_path[-1]
             del open_list[current_city]
             explored_list.add(current_city)
@@ -135,8 +144,13 @@ class GraphManager:
                         total_time = end_time - start_time
                         memory_used = self.calculate_memory_usage()
                         return current_path + [goal], explored_list, total_time, memory_used
-                    next_cost = self.graph[current_city][neighbor]["weight"]
-                    heuristic = self.heuristics[neighbor, goal]
+                    try:
+                        next_cost = self.graph[current_city][neighbor]["weight"]
+                        heuristic = self.heuristics[neighbor, goal]
+                    except KeyError:
+                        raise KeyError(
+                            "Encountered a key that doesn't exist in the graph"
+                        )
                     total_cost = current_cost + next_cost + heuristic
                     open_list[neighbor] = (
                         total_cost, current_path + [neighbor])
@@ -150,10 +164,13 @@ class GraphManager:
         explored_list = set()  # Initialize explored list
         start_node = (0, start_city, [start_city])
         open_list[start_city] = start_node  # Add start node
-        while open_list:
 
-            current_cost, current_city, current_path = open_list[min(
-                open_list, key=open_list.get)]
+        while open_list:
+            try:
+                current_cost, current_city, current_path = open_list[min(
+                    open_list, key=open_list.get)]
+            except (KeyError, ValueError):
+                break  # open_list empty
             del open_list[current_city]
             explored_list.add(current_city)
             if current_city == goal_city:
@@ -162,17 +179,23 @@ class GraphManager:
                 memory_used = self.calculate_memory_usage()
                 return current_path + [goal_city], explored_list, total_time, memory_used
 
-            for neighbor in set(self.graph.neighbors(current_city)) - explored_list:
+            for neighbor in (set(self.graph.neighbors(current_city)) -
+                             explored_list):
                 if neighbor == goal_city:
                     end_time = time.time()
                     total_time = end_time - start_time
                     memory_used = self.calculate_memory_usage()
                     return current_path + [goal_city], explored_list, total_time, memory_used
 
-                next_cost = self.graph[current_city][neighbor]["weight"]
-                heuristic = self.heuristics[neighbor, goal_city]
-                total_cost = current_cost + next_cost + heuristic
-                if neighbor not in open_list or total_cost < open_list[neighbor][0]:
+                try:
+                    next_cost = self.graph[current_city][neighbor]["weight"]
+                    heuristic = self.heuristics[neighbor, goal_city]
+                    total_cost = current_cost + next_cost + heuristic
+                except (KeyError, TypeError):
+                    continue  # Neighbor or edge not found
+
+                if (neighbor not in open_list or
+                        total_cost < open_list[neighbor][0]):
                     open_list[neighbor] = (total_cost, neighbor,
                                            current_path + [neighbor])
 
