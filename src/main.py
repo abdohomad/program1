@@ -2,7 +2,6 @@ from tabulate import tabulate
 from Graph_manager import GraphManager
 from Coordinates import Coordinates
 from geopy.distance import geodesic
-import time
 import pandas as pd
 
 
@@ -91,11 +90,6 @@ def display_results(results_table, solution_path1, solution_path2, visited1, vis
     print("\nPath for Function 2:")
     print(solution_path2)
 
-    print("\nVisited Cities for Function 1:")
-    print(visited1)
-    print("\nVisited Cities for Function 2:")
-    print(visited2)
-
 
 def main():
     while True:
@@ -140,6 +134,8 @@ def main():
             "5": "A* Search"
         }
 
+        print(search_algorithms)
+
         function1_choice = get_user_input(
             "Enter the first function choice (1-5): ", lambda choice: validate_algorithm_choice(choice))
         function2_choice = get_user_input(
@@ -152,19 +148,15 @@ def main():
         function1_algorithm = search_algorithms[function1_choice]
         function2_algorithm = search_algorithms[function2_choice]
 
-        start_time = time.time()  # Start time measurement
-
-        solution_path1, visited1 = execute_search_function(
+        solution_path1, visited1, time1, memory_used1 = execute_search_function(
             graph_manager, function1_choice, start_city, goal_city)
 
-        elapsed_time1 = time.time() - start_time
-
-        start_time = time.time()  # Reset start time for the second function
-
-        solution_path2, visited2 = execute_search_function(
+        solution_path2, visited2, time2, memory_used2 = execute_search_function(
             graph_manager, function2_choice, start_city, goal_city)
-
-        elapsed_time2 = time.time() - start_time
+        formatted_path1 = ' -> '.join(
+            solution_path1) if solution_path1 else None
+        formatted_path2 = ' -> '.join(
+            solution_path2) if solution_path2 else None
 
         # Display results as a table
         results_table = pd.DataFrame({
@@ -172,11 +164,12 @@ def main():
             "Visited Cities": [len(visited1) if visited1 else None, len(visited2) if visited2 else None],
             "Total Distance": [calculate_distance(solution_path1, city_coordinates) if solution_path1 else None,
                                calculate_distance(solution_path2, city_coordinates) if solution_path2 else None],
-            "Search Time": ["{:.9f}".format(elapsed_time1), "{:.9f}".format(elapsed_time2)]
+            "Search Time": ["{:.5f} milliseconds".format(time1), "{:.5f} milliseconds".format(time2)],
+            "Memory Used": [f"{memory_used1:.3f} MB", f"{memory_used2:.3f} MB"]
         })
 
-        display_results(results_table, solution_path1,
-                        solution_path2, visited1, visited2)
+        display_results(results_table, formatted_path1,
+                        formatted_path2, visited1, visited2)
 
         # Ask the user if they want to perform another comparison
         another_comparison = input(
