@@ -38,19 +38,6 @@ def add_connections(graph_manager, city_coordinates, file_path):
                         f"Coordinates not found for {source_city} or {destination_city}")
 
 
-def get_user_choice(search_algorithms):
-    print("\nSelect a search algorithm:")
-    for code, algorithm in search_algorithms.items():
-        print(f"{code}. {algorithm}")
-
-    while True:
-        choice = input("Enter your choice (1-5): ")
-        if choice in search_algorithms:
-            return choice
-        else:
-            print("Invalid choice. Please enter a number between 1 and 5.")
-
-
 def calculate_distance(path, city_coordinates):
     total_distance = 0
     for i in range(len(path) - 1):
@@ -96,13 +83,18 @@ def validate_algorithm_choice(choice):
     return choice in {"1", "2", "3", "4", "5"}
 
 
-def display_results(results_table, solution_path1, solution_path2):
+def display_results(results_table, solution_path1, solution_path2, visited1, visited2):
     print("\nResults Table:")
     print(tabulate(results_table, headers='keys', tablefmt='pretty'))
     print("\nPath for Function 1:")
     print(solution_path1)
     print("\nPath for Function 2:")
     print(solution_path2)
+
+    print("\nVisited Cities for Function 1:")
+    print(visited1)
+    print("\nVisited Cities for Function 2:")
+    print(visited2)
 
 
 def main():
@@ -183,7 +175,8 @@ def main():
             "Search Time": ["{:.9f}".format(elapsed_time1), "{:.9f}".format(elapsed_time2)]
         })
 
-        display_results(results_table, solution_path1, solution_path2)
+        display_results(results_table, solution_path1,
+                        solution_path2, visited1, visited2)
 
         # Ask the user if they want to perform another comparison
         another_comparison = input(
